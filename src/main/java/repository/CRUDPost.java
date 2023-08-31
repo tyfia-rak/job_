@@ -16,23 +16,47 @@ public class CRUDPost {
 
     private static final Connection connection = DataBaseConnection.getConnection();
 
-    public static void insertPost(Post toInsert) throws SQLException {
 
-            String sql = "INSERT INTO Post (DatePost, TitlePost, DescriptionPost, ResponsibilityPost, requirement,Salary)"
-                    + " VALUES (?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement statement = connection.prepareStatement(sql)){
-                    statement.setDate(1, toInsert.getDatePost());
-                    statement.setString(2, toInsert.getTitlePost());
-                    statement.setString(3, toInsert.getDescriptionPost());
-                    statement.setString(4, toInsert.getResponsibility());
-                    statement.setString(5, toInsert.getRequirement());
-                    statement.setDouble(6, toInsert.getSalary());
-                    statement.executeUpdate();
-                    System.out.println("Query successfully");
+    public static void insertPost(Post toInsert) throws SQLException {
+        String sqlInsertCompany = "INSERT INTO Company (CompanyName, Address) VALUES (?, ?)";
+        String sqlInsertPost = "INSERT INTO Post (DatePost, TitlePost, DescriptionPost, Responsibility, requirement, Salary, idcompany)"
+                + " VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String[] returnId = { "idcompany" };
+        try (PreparedStatement insertCompanyStmt = connection.prepareStatement(sqlInsertCompany, returnId);
+             PreparedStatement insertPostStmt = connection.prepareStatement(sqlInsertPost, returnId)) {
+
+            // Insert the company if it doesn't exist
+            insertCompanyStmt.setString(1, toInsert.getCompany().getCompanyName());
+            insertCompanyStmt.setString(2, toInsert.getCompany().getAddress());
+            insertCompanyStmt.executeUpdate();
+
+            // Retrieve the generated company ID
+            int companyId;
+            try (ResultSet generatedKeys = insertCompanyStmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    companyId = generatedKeys.getInt(1);
+                } else {
+                    throw new SQLException("Creating company failed, no ID obtained.");
+                }
+            }
+
+            // Insert the post with the associated company ID
+            insertPostStmt.setDate(1, toInsert.getDatePost());
+            insertPostStmt.setString(2, toInsert.getTitlePost());
+            insertPostStmt.setString(3, toInsert.getDescriptionPost());
+            insertPostStmt.setString(4, toInsert.getResponsibility());
+            insertPostStmt.setString(5, toInsert.getRequirement());
+            insertPostStmt.setDouble(6, toInsert.getSalary());
+            insertPostStmt.setInt(7, companyId);
+            insertPostStmt.executeUpdate();
+
+            System.out.println("Query successfully");
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
+
+
     public static List<Post> findAllPost() {
         List<Post> postList = new ArrayList<>();
 
@@ -73,7 +97,7 @@ public class CRUDPost {
 
 
     public static void updatePost(Post toUpdate, int IdPost) throws SQLException {
-        String sql = "UPDATE Post SET DatePost = ?, TitlePost = ?, DescriptionPost = ?, ResponsibilityPost = ?, Requirement = ?, Salary = ? WHERE IdPost = ?";
+        String sql = "UPDATE Post SET DatePost = ?, TitlePost = ?, DescriptionPost = ?, Responsibility= ?, Requirement = ?, Salary = ? WHERE IdPost = ?";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setDate(1, toUpdate.getDatePost());
             statement.setString(2, toUpdate.getTitlePost());

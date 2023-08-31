@@ -30,36 +30,38 @@ public class CRUDApplyer {
             e.printStackTrace();
         }
     }
+
     public static List<Applyer> findAllApplyer() {
         List<Applyer> applyerList = new ArrayList<>();
 
-        String sql = "SELECT a.*, p.IdPost AS p_IdPost, p.DatePost AS p_DatePost, p.TitlePost AS p_TitlePost, p.DescriptionPost AS p_DescriptionPost, p.ResponsibilityPost AS p_ResponsibilityPost, p.requirement AS p_requirement, p.Salary AS p_Salary " +
+        String sql = "SELECT a.*, p.*, c.idcompany, c.companyname, c.address " +
                 "FROM Applyer a " +
-                "JOIN Post p ON a.IdPost = p.IdPost";
+                "JOIN Post p ON a.IdPost = p.IdPost " +
+                "JOIN Company c ON p.IdCompany = c.IdCompany";
 
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             ResultSet resultSet = statement.executeQuery();
 
             while (resultSet.next()) {
                 Company company = new Company(
-                        resultSet.getInt("IdCompany"),
-                        resultSet.getString("CompanyName"),
-                        resultSet.getString("Address")
+                        resultSet.getInt("idcompany"),
+                        resultSet.getString("companyname"),
+                        resultSet.getString("address")
                 );
 
                 Post post = new Post(
-                        resultSet.getInt("p_IdPost"),
-                        resultSet.getDate("p_DatePost"),
-                        resultSet.getString("p_TitlePost"),
-                        resultSet.getString("p_DescriptionPost"),
-                        resultSet.getString("p_ResponsibilityPost"),
-                        resultSet.getString("p_requirement"),
-                        resultSet.getDouble("p_Salary"),
+                        resultSet.getInt("IdPost"),
+                        resultSet.getDate("DatePost"),
+                        resultSet.getString("TitlePost"),
+                        resultSet.getString("DescriptionPost"),
+                        resultSet.getString("responsibility"),
+                        resultSet.getString("requirement"),
+                        resultSet.getDouble("Salary"),
                         company
                 );
 
                 Applyer applyer = new Applyer(
-                        resultSet.getInt("IdApplyer"),
+                        resultSet.getInt("id_applyer"),
                         resultSet.getString("name"),
                         resultSet.getInt("age"),
                         resultSet.getString("email"),
@@ -67,7 +69,6 @@ public class CRUDApplyer {
                         resultSet.getDate("applying_date"),
                         post
                 );
-                applyer.setPost(post);
 
                 applyerList.add(applyer);
             }
@@ -76,6 +77,7 @@ public class CRUDApplyer {
         }
         return applyerList;
     }
+
 
 
 
